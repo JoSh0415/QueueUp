@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id        String    @id
+  name      String?
+  avatarUrl String?
+  createdAt DateTime  @default(now())
+  rooms     Room[]    @relation("OwnerRooms")
+  members   Member[]
+  votes     Vote[]
+  messages  Message[]
+}
+
+model Room {
+  id           String    @id @default(cuid())
+  code         String    @unique
+  name         String
+  ownerId      String
+  createdAt    DateTime  @default(now())
+  status       String    @default("open") // 'open' | 'archived'
+  nowPlayingId String?
+  owner        Profile   @relation("OwnerRooms", fields: [ownerId], references: [id])
+  members      Member[]
+  tracks       Track[]
+  messages     Message[]
+}
+
+model Member {
+  id       String   @id @default(cuid())
+  roomId   String
+  userId   String
+  role     String   @default("guest") // 'host' | 'guest'
+  joinedAt DateTime @default(now())
+  room     Room     @relation(fields: [roomId], references: [id])
+  user     Profile  @relation(fields: [userId], references: [id])
+
+  @@unique([roomId, userId])
+}
+
+model Track {
+  id         String   @id @default(cuid())
+  roomId     String
+  url        String
+  title      String
+  thumbnail  String
+  durationMs Int?
+  addedBy    String
+  status     String   @default("queued") // 'queued' | 'playing' | 'skipped' | 'done'
+  createdAt  DateTime @default(now())
+  room       Room     @relation(fields: [roomId], references: [id])
+  votes      Vote[]
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  trackId   String
+  userId    String
+  value     Int
+  createdAt DateTime @default(now())
+  track     Track    @relation(fields: [trackId], references: [id])
+  user      Profile  @relation(fields: [userId], references: [id])
+
+  @@unique([trackId, userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id])
+  user      Profile  @relation(fields: [userId], references: [id])
+}
