@@ -8,12 +8,14 @@ datasource db {
 }
 
 model Profile {
-  id        String   @id
+  id        String    @id
   name      String?
   avatarUrl String?
-  createdAt DateTime @default(now())
-  rooms     Room[]   @relation("OwnerRooms")
+  createdAt DateTime  @default(now())
+  rooms     Room[]    @relation("OwnerRooms")
   members   Member[]
+  votes     Vote[]
+  messages  Message[]
 }
 
 model Room {
@@ -60,8 +62,10 @@ model Vote {
   id        String   @id @default(cuid())
   trackId   String
   userId    String
-  value     Int // +1 or -1
+  value     Int
   createdAt DateTime @default(now())
+  track     Track    @relation(fields: [trackId], references: [id])
+  user      Profile  @relation(fields: [userId], references: [id])
 
   @@unique([trackId, userId])
 }
@@ -72,4 +76,6 @@ model Message {
   userId    String
   text      String
   createdAt DateTime @default(now())
+  room      Room     @relation(fields: [roomId], references: [id])
+  user      Profile  @relation(fields: [userId], references: [id])
 }
